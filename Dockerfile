@@ -1,7 +1,7 @@
 FROM node:22-alpine AS build-stage 
 WORKDIR /app 
 COPY package*.json ./ 
-RUN npm ci 
+RUN npm install
 COPY . . 
 ARG BUILD_MODE=production 
 RUN npm run build -- --mode ${BUILD_MODE} 
