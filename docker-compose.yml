@@ -1,4 +1,4 @@
-services: 
+services:  
   frontend: 
     image: colapotato/234-deploylab-frontend:latest 
     pull_policy: always 
