@@ -5,8 +5,8 @@ RUN pnpm config set unsafe-perm true
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-# 核心：--ignore-builds 放在install命令里，不要写config
-RUN pnpm install --frozen-lockfile --ignore-builds
+# 自动输入y同意所有构建脚本，再执行安装
+RUN echo y | pnpm approve-builds && pnpm install --frozen-lockfile
 
 COPY . .
 ARG BUILD_MODE=production
