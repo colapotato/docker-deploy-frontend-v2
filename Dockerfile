@@ -1,11 +1,14 @@
 FROM node:22-alpine AS build-stage
 RUN npm install -g pnpm
 RUN pnpm config set registry https://registry.npmmirror.com
+# 全局关闭pnpm构建脚本拦截
+RUN pnpm config set ignore-builds false
+RUN pnpm config set unsafe-perm true
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm approve-builds --all
-RUN pnpm install --frozen-lockfile
+# 安装时跳过构建脚本校验
+RUN pnpm install --frozen-lockfile --ignore-builds
 
 COPY . .
 ARG BUILD_MODE=production
