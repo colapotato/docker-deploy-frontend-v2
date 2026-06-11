@@ -1,19 +1,22 @@
 FROM node:22-alpine AS build-stage
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-# 打包时使用占位符
-RUN VITE_GRAPHQL_URI=__VITE_GRAPHQL_URI_PLACEHOLDER__ \
-    VITE_SERVER_URI=__VITE_SERVER_URI_PLACEHOLDER__ \
-    npm run build -- --mode production
+# 全局安装pnpm
+RUN npm install -g pnpm
+# 换国内源加速
+RUN pnpm config set registry https://registry.npmmirror.com
 
-# 生产镜像
+WORKDIR /app
+# 同时复制package.json + pnpm锁文件
+COPY package.json pnpm-lock.yaml ./
+# 严格根据锁文件安装
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+ARG BUILD_MODE=production
+RUN pnpm run build -- --mode ${BUILD_MODE}
+
+# 生产Nginx阶段不变
 FROM nginx:alpine AS production-stage
 COPY nginx-custom.conf /etc/nginx/conf.d/default.conf
 COPY --from=build-stage /app/dist /usr/share/nginx/html
-# 拷贝启动脚本并授权
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
 EXPOSE 8080
-ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
